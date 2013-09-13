@@ -3,11 +3,11 @@
 # a conversion one database adapter type to another (say postgres -> mysql )
 #
 # WARNING 1: this script deletes all development data and replaces it with
-#            production data
+#                     production data
 #
 # WARNING 2: This script assumes it is the only user updating either database.
-#            Database integrity could be corrupted if other users where 
-#            writing to the databases.
+#                     Database integrity could be corrupted if other users where 
+#                     writing to the databases.
 #
 # Usage:  rake db:convert:prod2dev
 #
@@ -22,6 +22,7 @@
 #
 # The master repository for this script is at github:
 #    http://github.com/face/rails_db_convert_using_adapters/tree/master
+#
 #
 # Author: Rama McIntosh
 #         Matson Systems, Inc.
@@ -75,7 +76,7 @@ namespace :db do
       class DevelopmentModelClass < ActiveRecord::Base
       end
 
-      skip_tables = ["schema_info", "schema_migrations"]
+      skip_tables = ["schema_info"]
       ActiveRecord::Base.establish_connection(:production)
       (ActiveRecord::Base.connection.tables - skip_tables).each do |table_name|
 
@@ -99,11 +100,21 @@ namespace :db do
 
           # Now, write out the prod data to the dev db
           DevelopmentModelClass.transaction do
+            print "Convert the records to sql format for INSERT INTO sql method e.g('23', 'name'), ('22', 'test')"
+            print "#{models}"
+            values = ""
             models.each do |model|
-              new_model = DevelopmentModelClass.new(model.attributes)
-              new_model.id = model.id
-              new_model.save(false)
+              #new_model = DevelopmentModelClass.new(model.attributes)
+              print "#{model.attributes.values}"
+              #INSERT INTO `henryss`.`accounts` (`id`, `name`, `surname`, `email`, `crypted_password`, `salt`, `role`) VALUES ('27','Alexandre Deville','adeville85','adeville85@gmail.com','AgDgDCT/MhU+q1XBqtl+sA==','21ffcc1eb28202a3e4e4d47cf50481754a32962f','user'),('28','Andrea Schmidt','andreaschmi','andreaschmi@gmail.com','upNEHMVvXqturn3kKd8HvQ==','922fa8fbc70bd0ce39731359758ee8c32d84fb1e','user'); 
+              #new_model.id = model.id
+              #new_model.save(false)
+              values = values + '("'
+              values = values + model.attributes.values.join('","')
+              values = values + '"),'
             end
+            file = File.new("#{table_name}.txt", "w")
+              file.write(values)
           end
         end
         print "#{count} records converted\n"
